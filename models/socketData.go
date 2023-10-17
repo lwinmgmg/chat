@@ -7,6 +7,6 @@ const (
 )
 
 type SocketData struct {
-	SocketType SocketType     `json:"socket_type"`
-	Data       map[string]any `json:"data"`
+	SocketType SocketType     `json:"socket_type,omitempty"`
+	Data       map[string]any `json:"data,omitempty"`
 }

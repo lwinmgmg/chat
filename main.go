@@ -14,7 +14,7 @@ import (
 func main() {
 	pubSocket := socket.SocketHandler{
 		Auth:    false,
-		UserMap: make(map[string]*websocket.Conn, 100),
+		UserMap: make(map[string]socket.UserInfo, 100),
 		ConnAge: time.Hour,
 	}
 	http.Handle("/ws", websocket.Handler(pubSocket.HandleSocket))

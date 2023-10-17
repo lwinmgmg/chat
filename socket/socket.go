@@ -7,43 +7,60 @@ import (
 	"time"
 
 	"github.com/lwinmgmg/chat/models"
+	"github.com/lwinmgmg/chat/services"
 	"github.com/lwinmgmg/chat/utils"
+	gmodel "github.com/lwinmgmg/gmodels/golang/models"
 	"golang.org/x/net/websocket"
 )
+
+var (
+	PgDb    = services.PgDb
+	MongoDb = models.MongoDb
+)
+
+type UserInfo struct {
+	User *gmodel.User
+	Conn *websocket.Conn
+}
 
 type SocketHandler struct {
 	Auth    bool
 	ConnAge time.Duration
-	UserMap map[string]*websocket.Conn
+	UserMap map[string]UserInfo
 }
 
-func (socket *SocketHandler) HandleSocket(ws *websocket.Conn) {
+func (socketHandler *SocketHandler) HandleSocket(ws *websocket.Conn) {
 	uid := ""
 	var err error
 	// defer section
 	defer func(c *websocket.Conn) {
 		log.Println("Close the connection", ws.RemoteAddr())
-		socket.CallBack(&uid, c)
+		socketHandler.CallBack(&uid, c)
 	}(ws)
 	log.Println("Got one connection", ws.RemoteAddr())
 
 	// Setting connection life
-	// if err := ws.SetDeadline(time.Now().UTC().Add(socket.ConnAge)); err != nil {
-	// 	log.Println("Error on setting socket deadline")
-	// 	return
-	// }
+	if err := ws.SetDeadline(time.Now().UTC().Add(socketHandler.ConnAge)); err != nil {
+		log.Println("Error on setting socket deadline")
+		return
+	}
 
 	// Authentication
-	uid, err = socket.AuthFunc(ws)
+	user, err := socketHandler.AuthFunc(ws)
 	if err != nil {
 		log.Println("Error on auth", err)
+		return
 	}
-	ws.Write([]byte("Hello"))
+	ws.Write([]byte("Hello" + user.Partner.FirstName + " " + user.Partner.LastName))
+	uid = user.Code
 	// Assigning User Map
-	socket.UserMap[uid] = ws
+	socketHandler.UserMap[uid] = UserInfo{
+		User: user,
+		Conn: ws,
+	}
 
 	for {
-		mesgB, err := socket.ReadMesg(ws)
+		mesgB, err := socketHandler.ReadMesg(ws)
 		if err != nil {
 			log.Println(err)
 			break
@@ -57,7 +74,7 @@ func (socket *SocketHandler) HandleSocket(ws *websocket.Conn) {
 		case models.CHAT:
 			var data models.ChatData
 			utils.MapToStruct[any](mesg.Data, &data)
-			socket.HandleChat(uid, data, ws)
+			socketHandler.HandleChat(uid, data, ws)
 			break
 		default:
 			fmt.Println("Default", string(mesgB))

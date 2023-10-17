@@ -5,7 +5,7 @@ import "go.mongodb.org/mongo-driver/bson/primitive"
 type ChatType string
 
 const (
-	CT_SEND     ChatType = "sent"
+	CT_SEND     ChatType = "send"
 	CT_NEW      ChatType = "new"
 	CT_TYPE     ChatType = "type"
 	CT_UN_TYPE  ChatType = "untype"
@@ -16,21 +16,22 @@ const (
 )
 
 type ChatMesg struct {
-	ID                primitive.ObjectID `json:"id"`
-	Message           string             `json:"mesg"`
-	AttachmentURL     string             `json:"att_url"`
-	ConversationID    uint               `json:"conv_id"`
-	ConversationType  ConversationType   `json:"conv_type"`
-	ConversationName  string             `json:"conv_name"`
-	ConversationImage string             `json:"conv_img"`
-	UserID            string             `json:"uid"`
-	UserList          []string           `json:"user_list"`
-	ReactionID        uint               `json:"react_id"`
-	UpdatedFields     []string           `json:"fields"`
+	ID                primitive.ObjectID `json:"id,omitempty"`
+	ParentId          primitive.ObjectID `json:"parent_id,omitempty"`
+	Message           string             `json:"mesg,omitempty"`
+	AttachmentURL     string             `json:"att_url,omitempty"`
+	ConversationID    uint               `json:"conv_id,omitempty"`
+	ConversationType  ConversationType   `json:"conv_type,omitempty"`
+	ConversationName  string             `json:"conv_name,omitempty"`
+	ConversationImage string             `json:"conv_img,omitempty"`
+	UserID            string             `json:"uid,omitempty"`
+	UserList          []string           `json:"user_list,omitempty"`
+	ReactionID        uint               `json:"react_id,omitempty"`
+	UpdatedFields     []string           `json:"fields,omitempty"`
 }
 
 type ChatData struct {
-	ConversationID uint     `json:"cid"`
-	ChatType       ChatType `json:"chat_type"`
-	Message        ChatMesg `json:"mesg"`
+	ConversationID uint     `json:"cid,omitempty"`
+	ChatType       ChatType `json:"chat_type,omitempty"`
+	Message        ChatMesg `json:"mesg,omitempty"`
 }

@@ -1,13 +1,16 @@
 package socket
 
 import (
+	"github.com/lwinmgmg/chat/grpc/client"
+	gmodels "github.com/lwinmgmg/gmodels/golang/models"
 	"golang.org/x/net/websocket"
 )
 
-func (socket *SocketHandler) AuthFunc(ws *websocket.Conn) (string, error) {
-	uidB, err := socket.ReadMesg(ws)
+func (socketHandler *SocketHandler) AuthFunc(ws *websocket.Conn) (*gmodels.User, error) {
+	tokenB, err := socketHandler.ReadMesg(ws)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return string(uidB), nil
+	user, err := client.GetUserByToken(string(tokenB))
+	return user, err
 }

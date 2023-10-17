@@ -20,7 +20,7 @@ func waitForMesgSize(buffer []byte, ws *websocket.Conn) (int, error) {
 	return strconv.Atoi(sizeStr)
 }
 
-func (socket *SocketHandler) ReadMesg(ws *websocket.Conn) ([]byte, error) {
+func (socketHandler *SocketHandler) ReadMesg(ws *websocket.Conn) ([]byte, error) {
 	buff := make([]byte, 5)
 	size, err := waitForMesgSize(buff, ws)
 	if err != nil {
@@ -31,6 +31,5 @@ func (socket *SocketHandler) ReadMesg(ws *websocket.Conn) ([]byte, error) {
 	if err != nil {
 		return nil, errors.Join(err, exceptions.ErrReadMesg)
 	}
-	fmt.Println(string(mesgBytes))
 	return mesgBytes[:readedSize], nil
 }
