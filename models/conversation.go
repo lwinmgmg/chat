@@ -61,24 +61,24 @@ func CreateNewNormalConv(uid1, uid2 string, tx *gorm.DB) (*Conversation, *Conver
 }
 
 func FindNormalConversation(uid1, uid2 string, tx *gorm.DB) (*Conversation, error) {
-	var convId Conversation
+	var conv Conversation
 	if err := tx.Raw(`
 	SELECT conv.* FROM conversations AS conv
 	INNER JOIN conversation_users AS conv_user ON conv.id=conv_user.conversation_id
 	INNER JOIN conversation_users AS conv_user1 ON conv.id=conv_user1.conversation_id
 	WHERE conv.con_type=$1 AND conv_user.user_id=$2 AND conv_user1.user_id=$3
 	LIMIT 1
-	`, NormalCon, uid1, uid2).Scan(&convId).Error; err != nil {
-		return &convId, err
+	`, NormalCon, uid1, uid2).Scan(&conv).Error; err != nil {
+		return &conv, err
 	}
-	if convId.ID == 0 {
-		return &convId, ConvNotFound
+	if conv.ID == 0 {
+		return &conv, ConvNotFound
 	}
-	return &convId, nil
+	return &conv, nil
 }
 
 func GetNormalConversation(uid1, uid2 string, tx *gorm.DB) (*Conversation, error) {
-	convId, err := FindNormalConversation(uid1, uid2, tx)
+	conv, err := FindNormalConversation(uid1, uid2, tx)
 	if err == ConvNotFound {
 		conv, _, _, err := CreateNewNormalConv(uid1, uid2, tx)
 		if err != nil {
@@ -86,5 +86,33 @@ func GetNormalConversation(uid1, uid2 string, tx *gorm.DB) (*Conversation, error
 		}
 		return conv, nil
 	}
-	return convId, err
+	return conv, err
+}
+
+func CreateNewGroupConv(uid string, userList []string, tx *gorm.DB) (*Conversation, error) {
+	var conv = &Conversation{
+		Active:  true,
+		ConType: NormalCon,
+		UserID:  uid,
+	}
+	if err := conv.Create(tx); err != nil {
+		return nil, err
+	}
+	var convUser = &ConversationUser{
+		UserID:         uid,
+		ConversationID: conv.ID,
+	}
+	if err := convUser.Create(tx); err != nil {
+		return nil, err
+	}
+	for _, user := range userList {
+		var convUser = &ConversationUser{
+			UserID:         user,
+			ConversationID: conv.ID,
+		}
+		if err := convUser.Create(tx); err != nil {
+			return nil, err
+		}
+	}
+	return conv, nil
 }

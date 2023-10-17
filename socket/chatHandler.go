@@ -13,6 +13,8 @@ func (socketHandler *SocketHandler) HandleChat(uid string, mesg models.ChatData,
 	var err error
 	switch mesg.ChatType {
 	case models.CT_NEW:
+		err = socketHandler.ChatTypeNew(uid, &mesg, ws)
+	case models.CT_SEND:
 		err = socketHandler.ChatTypeSend(uid, &mesg, ws)
 	}
 	data, err := json.Marshal(mesg)

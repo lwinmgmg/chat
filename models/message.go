@@ -21,6 +21,7 @@ type Message struct {
 	ID             primitive.ObjectID `bson:"_id,omitempty"`
 	ParentID       primitive.ObjectID `bson:"parent_id,omitempty"`
 	UserId         string             `bson:"user_id,omitempty"`
+	ExcludedUsers  []string           `bson:"excluded_users,omitempty"`
 	ConversationID uint               `bson:"conversation_id,omitempty"`
 	Message        string             `bson:"message"`
 	AttachmentURL  string             `bson:"attachment_url,omitempty"`
