@@ -62,7 +62,7 @@ func (socketHandler *SocketHandler) HandleSocket(ws *websocket.Conn) {
 	for {
 		mesgB, err := socketHandler.ReadMesg(ws)
 		if err != nil {
-			log.Println(err)
+			log.Println("Error on reading message", err)
 			break
 		}
 		var mesg models.SocketData

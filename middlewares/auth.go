@@ -30,7 +30,7 @@ func JwtAuthMiddleware(tokenType string) gin.HandlerFunc {
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, models.DefaultResponse{
 				Code:    2,
-				Message: fmt.Sprintf("Authorization Required! [%v]", keyString[0:len(tokenType)]),
+				Message: fmt.Sprintf("Authorization Required! [%v]", keyString),
 			})
 			return
 		}

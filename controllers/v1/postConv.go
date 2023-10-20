@@ -24,7 +24,7 @@ func (cV1 *ControllerV1) PostConversation(ctx *gin.Context) {
 	if !ok {
 		return
 	}
-	convData := models.ConversationData{}
+	convData := models.ConversationCreateData{}
 	if err := ctx.ShouldBindJSON(&convData); err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.DefaultResponse{
 			Code:    0,

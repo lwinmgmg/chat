@@ -19,11 +19,11 @@ var (
 
 type Conversation struct {
 	gorm.Model
-	Name     string `gorm:"size:40"`
-	Active   bool
-	ConType  ConversationType `gorm:"index"`
-	UserID   string           `gorm:"index"`
-	ImageURL string           `gorm:"size: 256"`
+	Name     string           `gorm:"size:40" json:"name"`
+	Active   bool             `json:"active"`
+	ConType  ConversationType `gorm:"index" json:"conv_type"`
+	UserID   string           `gorm:"index" json:"user_id"`
+	ImageURL string           `gorm:"size: 256" json:"img_url"`
 }
 
 func (conv *Conversation) GetCollection() string {
@@ -34,9 +34,21 @@ func (conv *Conversation) Create(tx *gorm.DB) error {
 	return tx.Create(conv).Error
 }
 
+func (conv *Conversation) Get(convId uint, tx *gorm.DB) error {
+	return tx.Model(conv).First(conv, convId).Error
+}
+
+func (conv *Conversation) SetActive(tx *gorm.DB) error {
+	return tx.Model(conv).Update("active", true).Error
+}
+
+func (conv *Conversation) GetConvByUserId(uid string, dest any, tx *gorm.DB) error {
+	return tx.Model(conv).Joins("INNER JOIN conversation_users ON conversation_users.conversation_id=conversations.id AND conversation_users.user_id = ?", uid).Order("conversations.updated_at desc").Find(dest).Error
+}
+
 func CreateNewNormalConv(uid1, uid2 string, tx *gorm.DB) (*Conversation, *ConversationUser, *ConversationUser, error) {
 	var conv = &Conversation{
-		Active:  true,
+		Active:  false,
 		ConType: NormalCon,
 		UserID:  uid1,
 	}
@@ -92,7 +104,7 @@ func GetNormalConversation(uid1, uid2 string, tx *gorm.DB) (*Conversation, error
 func CreateNewGroupConv(uid string, userList []string, tx *gorm.DB) (*Conversation, error) {
 	var conv = &Conversation{
 		Active:  true,
-		ConType: NormalCon,
+		ConType: GroupCon,
 		UserID:  uid,
 	}
 	if err := conv.Create(tx); err != nil {

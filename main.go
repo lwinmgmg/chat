@@ -30,11 +30,11 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		err := http.ListenAndServe(fmt.Sprintf(":%v", webSocketPort), nil)
 		if err != nil {
 			panic("ListenAndServe: " + err.Error())
 		}
-		wg.Done()
 	}()
 
 	app := gin.Default()
@@ -42,10 +42,10 @@ func main() {
 	controllers.DefineRoutes(app)
 	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		if err := app.Run("localhost:8078"); err != nil {
 			panic(err)
 		}
-		wg.Done()
 	}()
 	wg.Wait()
 }

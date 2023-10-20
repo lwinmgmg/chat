@@ -30,64 +30,33 @@ func (socketHandler *SocketHandler) ChatTypeNew(uid string, data *models.ChatDat
 		if err := validateNormalCon(data); err != nil {
 			return err
 		}
-		return PgDb.Transaction(func(tx *gorm.DB) error {
-			conv, err := models.GetNormalConversation(uid, data.Message.UserList[0], tx)
-			if err != nil {
-				return err
-			}
-			data.ConversationID = conv.ID
-			if data.Message.Message != "" || data.Message.AttachmentURL != "" {
-				mesg := models.Message{
-					ParentID:       data.Message.ParentId,
-					UserId:         data.Message.UserID,
-					ConversationID: data.ConversationID,
-					Message:        data.Message.Message,
-					AttachmentURL:  data.Message.AttachmentURL,
-					Status:         models.SENT,
-					UpdatedTime:    uint(time.Now().UTC().Unix()),
-					CreatedTime:    uint(time.Now().UTC().Unix()),
-				}
-				if err := mesg.Create(MongoDb); err != nil {
-					return err
-				}
-				data.Message.ID = mesg.ID
-			}
-			return nil
-		})
 	case models.GroupCon:
 		if err := validateGroupCon(data); err != nil {
 			return err
 		}
-		return PgDb.Transaction(func(tx *gorm.DB) error {
-			conv := models.Conversation{
-				Name:     data.Name,
-				UserID:   uid,
-				Active:   true,
-				ConType:  models.GroupCon,
-				ImageURL: data.ImageURL,
+	}
+	return PgDb.Transaction(func(tx *gorm.DB) error {
+		var conv models.Conversation
+		conv.ID = data.ConversationID
+		if err := conv.SetActive(tx); err != nil {
+			return err
+		}
+		if data.Message.Message != "" || data.Message.AttachmentURL != "" {
+			mesg := models.Message{
+				ParentID:       data.Message.ParentId,
+				UserId:         data.Message.UserID,
+				ConversationID: data.ConversationID,
+				Message:        data.Message.Message,
+				AttachmentURL:  data.Message.AttachmentURL,
+				Status:         models.SENT,
+				UpdatedTime:    uint(time.Now().UTC().Unix()),
+				CreatedTime:    uint(time.Now().UTC().Unix()),
 			}
-			if err := conv.Create(tx); err != nil {
+			if err := mesg.Create(MongoDb); err != nil {
 				return err
 			}
-			data.ConversationID = conv.ID
-			if data.Message.Message != "" || data.Message.AttachmentURL != "" {
-				mesg := models.Message{
-					ParentID:       data.Message.ParentId,
-					UserId:         data.Message.UserID,
-					ConversationID: data.ConversationID,
-					Message:        data.Message.Message,
-					AttachmentURL:  data.Message.AttachmentURL,
-					Status:         models.SENT,
-					UpdatedTime:    uint(time.Now().UTC().Unix()),
-					CreatedTime:    uint(time.Now().UTC().Unix()),
-				}
-				if err := mesg.Create(MongoDb); err != nil {
-					return err
-				}
-				data.Message.ID = mesg.ID
-			}
-			return nil
-		})
-	}
-	return nil
+			data.Message.ID = mesg.ID
+		}
+		return nil
+	})
 }

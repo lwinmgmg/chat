@@ -5,8 +5,17 @@ import (
 	"testing"
 
 	"github.com/lwinmgmg/chat/models"
+	"github.com/lwinmgmg/chat/services"
 	"gorm.io/gorm"
 )
+
+func TestGetConvByUserId(t *testing.T) {
+	conv := models.Conversation{}
+	convList := []models.Conversation{}
+	if err := conv.GetConvByUserId("ajkdjfka", &convList, services.PgDb); err != nil {
+		t.Error(err)
+	}
+}
 
 func TestFindNormalConversation(t *testing.T) {
 	models.PgDb.Transaction(func(tx *gorm.DB) error {
