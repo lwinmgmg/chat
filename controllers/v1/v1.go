@@ -9,7 +9,8 @@ import (
 )
 
 var (
-	PgDb = services.PgDb
+	PgDb    = services.PgDb
+	MongoDb = models.MongoDb
 )
 
 type ControllerV1 struct {
@@ -19,7 +20,8 @@ type ControllerV1 struct {
 func (cV1 *ControllerV1) Serve() {
 	cV1.Router.POST("/conversations", cV1.PostConversation)
 	cV1.Router.GET("conversations", cV1.GetConversations)
-	cV1.Router.GET("/conversations/:id", cV1.GetConversationByID)
+	cV1.Router.GET("/conversations/:convId/messages/:lastMesg", cV1.GetMessages)
+	cV1.Router.GET("/conversations/:convId", cV1.GetConversationByID)
 }
 
 func GetUserFromContext(ctx *gin.Context) (string, bool) {

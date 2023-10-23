@@ -14,16 +14,17 @@ const (
 )
 
 var (
-	ConvNotFound = errors.New("conversation not found")
+	ErrConvNotFound = errors.New("conversation not found")
 )
 
 type Conversation struct {
 	gorm.Model
-	Name     string           `gorm:"size:40" json:"name"`
-	Active   bool             `json:"active"`
-	ConType  ConversationType `gorm:"index" json:"conv_type"`
-	UserID   string           `gorm:"index" json:"user_id"`
-	ImageURL string           `gorm:"size: 256" json:"img_url"`
+	Name       string           `gorm:"size:40" json:"name"`
+	Active     bool             `json:"active"`
+	ConType    ConversationType `gorm:"index" json:"conv_type"`
+	UserID     string           `gorm:"index" json:"user_id"`
+	ImageURL   string           `gorm:"size: 256" json:"img_url"`
+	LastMesgID string           `gorm:"index; size: 32" json:"last_mesg_id"`
 }
 
 func (conv *Conversation) GetCollection() string {
@@ -43,7 +44,16 @@ func (conv *Conversation) SetActive(tx *gorm.DB) error {
 }
 
 func (conv *Conversation) GetConvByUserId(uid string, dest any, tx *gorm.DB) error {
-	return tx.Model(conv).Joins("INNER JOIN conversation_users ON conversation_users.conversation_id=conversations.id AND conversation_users.user_id = ?", uid).Order("conversations.updated_at desc").Find(dest).Error
+	return tx.Model(conv).Distinct("conversations.*").Joins("INNER JOIN conversation_users ON conversation_users.conversation_id=conversations.id AND conversation_users.user_id = ?", uid).Order("conversations.last_mesg_id DESC, conversations.updated_at DESC").Find(dest).Error
+}
+
+func UpdateLastMesgId(id uint, mesgId string, tx *gorm.DB) error {
+	conv := &Conversation{}
+	if err := tx.Model(conv).First(conv, id).Error; err != nil {
+		return err
+	}
+	conv.LastMesgID = mesgId
+	return tx.Save(conv).Error
 }
 
 func CreateNewNormalConv(uid1, uid2 string, tx *gorm.DB) (*Conversation, *ConversationUser, *ConversationUser, error) {
@@ -75,23 +85,25 @@ func CreateNewNormalConv(uid1, uid2 string, tx *gorm.DB) (*Conversation, *Conver
 func FindNormalConversation(uid1, uid2 string, tx *gorm.DB) (*Conversation, error) {
 	var conv Conversation
 	if err := tx.Raw(`
-	SELECT conv.* FROM conversations AS conv
+	SELECT DISTINCT ON (conv.id) conv.* FROM conversations AS conv
 	INNER JOIN conversation_users AS conv_user ON conv.id=conv_user.conversation_id
-	INNER JOIN conversation_users AS conv_user1 ON conv.id=conv_user1.conversation_id
-	WHERE conv.con_type=$1 AND conv_user.user_id=$2 AND conv_user1.user_id=$3
+	INNER JOIN conversation_users AS conv_user1 ON conv.id=conv_user1.conversation_id AND conv_user1.id!=conv_user.id
+	WHERE conv.con_type=$1
+	AND conv_user.user_id=$2
+	AND conv_user1.user_id=$3
 	LIMIT 1
 	`, NormalCon, uid1, uid2).Scan(&conv).Error; err != nil {
 		return &conv, err
 	}
 	if conv.ID == 0 {
-		return &conv, ConvNotFound
+		return &conv, ErrConvNotFound
 	}
 	return &conv, nil
 }
 
 func GetNormalConversation(uid1, uid2 string, tx *gorm.DB) (*Conversation, error) {
 	conv, err := FindNormalConversation(uid1, uid2, tx)
-	if err == ConvNotFound {
+	if err == ErrConvNotFound {
 		conv, _, _, err := CreateNewNormalConv(uid1, uid2, tx)
 		if err != nil {
 			return conv, err

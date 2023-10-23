@@ -16,6 +16,7 @@ type ConversationCreateData struct {
 type ConversationInfo struct {
 	ID               uint             `json:"id"`
 	ConversationType ConversationType `json:"conv_type"`
+	LastMesgID       string           `json:"last_mesg_id"`
 }
 
 type ConversationDetail struct {
@@ -25,5 +26,6 @@ type ConversationDetail struct {
 	Active           bool             `json:"active"`
 	UserID           string           `json:"user_id"`
 	ImageURL         string           `json:"img_url"`
+	LastMesgId       string           `json:"last_mesg_id"`
 	ConvUsers        []ConvUserDetail `json:"conv_users"`
 }

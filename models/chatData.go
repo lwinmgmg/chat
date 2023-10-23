@@ -20,17 +20,21 @@ type ChatMesg struct {
 	ParentId      primitive.ObjectID `json:"parent_id,omitempty"`
 	Message       string             `json:"mesg,omitempty"`
 	AttachmentURL string             `json:"att_url,omitempty"`
+	IsEdited      bool               `json:"is_edited"`
 	Status        MessageStatus      `json:"status,omitempty"`
-	UserID        string             `json:"uid,omitempty"`
+	UserID        string             `json:"user_id,omitempty"`
 	UserList      []string           `json:"user_list,omitempty"`
 	ReactionID    uint               `json:"react_id,omitempty"`
+	UpdatedTime   uint               `json:"updated_time"`
+	CreatedTime   uint               `json:"created_time"`
 	UpdatedFields []string           `json:"fields,omitempty"`
 }
 
 type ChatData struct {
 	Name             string           `json:"name,omitempty"`
-	ConversationID   uint             `json:"cid,omitempty"`
+	ConversationID   uint             `json:"conversation_id,omitempty"`
 	ConversationType ConversationType `json:"conv_type,omitempty"`
+	LastMesgID       string           `json:"last_mesg_id,omitempty"`
 	ChatType         ChatType         `json:"chat_type,omitempty"`
 	Message          ChatMesg         `json:"mesg,omitempty"`
 	ImageURL         string           `json:"img_url,omitempty"`

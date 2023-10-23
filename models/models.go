@@ -45,6 +45,12 @@ func init() {
 				{Key: "conversation_id", Value: 1},
 			},
 		},
+		{
+			Keys: bson.D{
+				{Key: "_id", Value: -1},
+				{Key: "conversation_id", Value: 1},
+			},
+		},
 	}); err != nil {
 		panic(err)
 	} else {

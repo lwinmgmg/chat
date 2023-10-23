@@ -24,10 +24,7 @@ func (convUser *ConversationUser) GetByConvId(convId uint, dest any, tx *gorm.DB
 }
 
 func (conv *ConversationUser) GetConversationsByUserId(uid string, dest any, tx *gorm.DB) error {
-	if err := tx.Exec("SELECT cu.conversation_id FROM conversation_users WHERE user_id=$1", uid).Error; err != nil{
-		
-	}
-	return nil
+	return tx.Exec("SELECT cu.conversation_id FROM conversation_users WHERE user_id=$1", uid).Error
 }
 
 func GetUidsByConversationID(convId uint, tx *gorm.DB) ([]ConversationUser, error) {

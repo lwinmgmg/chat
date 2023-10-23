@@ -39,16 +39,18 @@ func (cV1 *ControllerV1) PostConversation(ctx *gin.Context) {
 		})
 		return
 	}
+	var conv *models.Conversation
+	var err error
 	switch convData.ConvType {
 	case models.NormalCon:
 		if len(convData.UserList) != 1 {
 			ctx.AbortWithStatusJSON(http.StatusUnprocessableEntity, models.DefaultResponse{
 				Code:    0,
-				Message: "Request must be json format",
+				Message: "Request does not have receiver",
 			})
 			return
 		}
-		conv, err := models.GetNormalConversation(userCode, convData.UserList[0], services.PgDb)
+		conv, err = models.GetNormalConversation(userCode, convData.UserList[0], services.PgDb)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusBadRequest, models.DefaultResponse{
 				Code:    1,
@@ -56,10 +58,8 @@ func (cV1 *ControllerV1) PostConversation(ctx *gin.Context) {
 			})
 			return
 		}
-		ctx.JSON(http.StatusOK, conv)
-		return
 	case models.GroupCon:
-		conv, err := models.CreateNewGroupConv(userCode, convData.UserList, services.PgDb)
+		conv, err = models.CreateNewGroupConv(userCode, convData.UserList, services.PgDb)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusBadRequest, models.DefaultResponse{
 				Code:    1,
@@ -67,7 +67,24 @@ func (cV1 *ControllerV1) PostConversation(ctx *gin.Context) {
 			})
 			return
 		}
-		ctx.JSON(http.StatusOK, conv)
+	}
+	convUserList := []models.ConvUserDetail{}
+	convUser := models.ConversationUser{}
+	if err := convUser.GetByConvId(conv.ID, &convUserList, PgDb); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.DefaultResponse{
+			Code:    2,
+			Message: fmt.Sprintf("Failed to get conversation user %v", err),
+		})
 		return
 	}
+	ctx.JSON(http.StatusOK, models.ConversationDetail{
+		ID:               conv.ID,
+		Name:             conv.Name,
+		ConversationType: conv.ConType,
+		Active:           conv.Active,
+		UserID:           conv.UserID,
+		ImageURL:         conv.ImageURL,
+		LastMesgId:       conv.LastMesgID,
+		ConvUsers:        convUserList,
+	})
 }

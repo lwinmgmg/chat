@@ -16,6 +16,10 @@ func (socketHandler *SocketHandler) HandleChat(uid string, mesg models.ChatData,
 		err = socketHandler.ChatTypeNew(uid, &mesg, ws)
 	case models.CT_SEND:
 		err = socketHandler.ChatTypeSend(uid, &mesg, ws)
+	case models.CT_TYPE:
+	}
+	if err != nil {
+		return
 	}
 	data, err := json.Marshal(mesg)
 	if err != nil {
@@ -30,8 +34,10 @@ func (socketHandler *SocketHandler) HandleChat(uid string, mesg models.ChatData,
 		}
 		for i := 0; i < len(convUserList); i++ {
 			if userInfo, ok := socketHandler.UserMap[convUserList[i].UserID]; ok {
-				if _, err := userInfo.Conn.Write(data); err != nil {
-					log.Println("Error on sending clients", err)
+				for _, wsConn := range userInfo.Conn {
+					if _, err := wsConn.Write(data); err != nil {
+						log.Println("Error on sending clients", err)
+					}
 				}
 			}
 		}

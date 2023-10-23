@@ -9,25 +9,26 @@ import (
 	"github.com/lwinmgmg/chat/models"
 )
 
-func (cV1 *ControllerV1) GetConversationByID(ctx *gin.Context) {
+func (cV1 *ControllerV1) GetMessages(ctx *gin.Context) {
 	userCode, ok := GetUserFromContext(ctx)
 	if !ok {
 		return
 	}
 	convIdStr := ctx.Param("convId")
+	lastMesgStr := ctx.Param("lastMesg")
+	limitStr := ctx.Query("limit")
+	limit := 10
+	if len(limitStr) != 0 {
+		nLimit, err := strconv.Atoi(limitStr)
+		if err == nil {
+			limit = nLimit
+		}
+	}
 	convId, err := strconv.Atoi(convIdStr)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.DefaultResponse{
 			Code:    0,
 			Message: fmt.Sprintf("Failed to parse param %v", err),
-		})
-		return
-	}
-	conv := models.Conversation{}
-	if err := conv.Get(uint(convId), PgDb); err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.DefaultResponse{
-			Code:    1,
-			Message: fmt.Sprintf("Failed to get conversation %v", err),
 		})
 		return
 	}
@@ -53,14 +54,13 @@ func (cV1 *ControllerV1) GetConversationByID(ctx *gin.Context) {
 		})
 		return
 	}
-	ctx.JSON(http.StatusOK, models.ConversationDetail{
-		ID:               conv.ID,
-		Name:             conv.Name,
-		ConversationType: conv.ConType,
-		Active:           conv.Active,
-		UserID:           conv.UserID,
-		ImageURL:         conv.ImageURL,
-		LastMesgId:       conv.LastMesgID,
-		ConvUsers:        convUserList,
-	})
+	mesgs := []models.Message{}
+	if err := models.GetMessages(uint(convId), lastMesgStr, int64(limit), &mesgs, MongoDb); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.DefaultResponse{
+			Code:    3,
+			Message: "Error on fetching messages" + err.Error(),
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, mesgs)
 }

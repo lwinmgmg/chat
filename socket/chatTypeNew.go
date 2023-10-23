@@ -10,13 +10,10 @@ import (
 )
 
 var (
-	InvalidChatTypeSend = errors.New("Invalid data [ChatTypeSend]")
+	ErrInvalidChatTypeSend = errors.New("invalid data [chat_type_send]")
 )
 
 func validateNormalCon(data *models.ChatData) error {
-	if len(data.Message.UserList) != 1 {
-		return InvalidChatTypeSend
-	}
 	return nil
 }
 
@@ -25,6 +22,7 @@ func validateGroupCon(data *models.ChatData) error {
 }
 
 func (socketHandler *SocketHandler) ChatTypeNew(uid string, data *models.ChatData, ws *websocket.Conn) error {
+	data.Message.UserID = uid
 	switch data.ConversationType {
 	case models.NormalCon:
 		if err := validateNormalCon(data); err != nil {
@@ -55,7 +53,12 @@ func (socketHandler *SocketHandler) ChatTypeNew(uid string, data *models.ChatDat
 			if err := mesg.Create(MongoDb); err != nil {
 				return err
 			}
+			data.Message.Status = mesg.Status
 			data.Message.ID = mesg.ID
+			data.Message.UpdatedTime = mesg.UpdatedTime
+			data.Message.CreatedTime = mesg.CreatedTime
+			data.LastMesgID = mesg.ID.Hex()
+			return models.UpdateLastMesgId(conv.ID, data.LastMesgID, tx)
 		}
 		return nil
 	})

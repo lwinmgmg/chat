@@ -19,9 +19,11 @@ func main() {
 	// Web Socket
 	pubSocket := socket.SocketHandler{
 		Auth:    false,
-		UserMap: make(map[string]socket.UserInfo, 100),
+		UserMap: make(map[string]*socket.UserInfo, 100),
 		ConnAge: time.Hour,
 	}
+	pubSocket.Init()
+	defer pubSocket.Close()
 	http.Handle("/ws", websocket.Handler(pubSocket.HandleSocket))
 
 	webSocketPort := 8079
