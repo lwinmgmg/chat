@@ -4,14 +4,16 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/lwinmgmg/chat/env"
 	"github.com/lwinmgmg/chat/services"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"gorm.io/gorm"
 )
 
-const (
-	MongoDbName = "chat"
+var (
+	Env         = env.GetEnv()
+	MongoDbName = Env.Settings.Mongo.DB
 )
 
 var (

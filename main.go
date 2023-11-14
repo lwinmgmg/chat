@@ -10,8 +10,13 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/lwinmgmg/chat/controllers"
+	"github.com/lwinmgmg/chat/env"
 	"github.com/lwinmgmg/chat/socket"
 	"golang.org/x/net/websocket"
+)
+
+var (
+	Env = env.GetEnv()
 )
 
 // This example demonstrates a trivial echo server.
@@ -26,14 +31,12 @@ func main() {
 	defer pubSocket.Close()
 	http.Handle("/ws", websocket.Handler(pubSocket.HandleSocket))
 
-	webSocketPort := 8079
-
-	log.Printf("Websocket Connection is Listening on : %v\n", webSocketPort)
+	log.Printf("Websocket Connection is Listening on : %v\n", Env.Settings.SocketPort)
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		err := http.ListenAndServe(fmt.Sprintf(":%v", webSocketPort), nil)
+		err := http.ListenAndServe(fmt.Sprintf(":%v", Env.Settings.SocketPort), nil)
 		if err != nil {
 			panic("ListenAndServe: " + err.Error())
 		}
@@ -45,7 +48,7 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := app.Run("localhost:8078"); err != nil {
+		if err := app.Run(fmt.Sprintf("%v:%v", Env.Settings.Host, Env.Settings.Port)); err != nil {
 			panic(err)
 		}
 	}()

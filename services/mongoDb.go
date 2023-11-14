@@ -37,7 +37,13 @@ func GetMongoClient() *mongo.Client {
 }
 
 func ConnectMongo(ctx context.Context) (*mongo.Client, error) {
-	var uri string = "mongodb://root:example@localhost:27017"
+	var uri string = fmt.Sprintf(
+		"mongodb://%v:%v@%v:%v",
+		Env.Settings.Mongo.Login,
+		Env.Settings.Mongo.Password,
+		Env.Settings.Mongo.Host,
+		Env.Settings.Mongo.Port,
+	)
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
 	opts := options.Client().ApplyURI(uri).SetServerAPIOptions(serverAPI)
 	return mongo.Connect(ctx, opts)
